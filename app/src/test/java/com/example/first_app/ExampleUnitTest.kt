@@ -1,4 +1,4 @@
-package com.example.vladspractice
+package com.example.first_app
 
 import org.junit.Test
 
