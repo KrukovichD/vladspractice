@@ -1,9 +1,10 @@
 package com.example.first_app.Domain.usecase
 
-import com.example.first_app.Domain.repository.NS_SEMKRepository
+import com.example.first_app.Domain.repository.DatabaseRepository
+import com.example.first_app.Domain.repository.StorageRepository
 
-class DeleteData(private val repository: NS_SEMKRepository) {
+class DeleteData(private val dataRepository: DatabaseRepository) {
     suspend fun invoke() {
-        repository.deleteNS_SEMK()
+        dataRepository.deleteDataDb()
     }
 }

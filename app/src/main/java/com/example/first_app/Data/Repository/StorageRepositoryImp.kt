@@ -4,22 +4,22 @@ import android.content.Context
 import androidx.lifecycle.LiveData
 import com.example.first_app.Data.DB.AppDatabase
 import com.example.first_app.Data.models.NS_SEMK
-import com.example.first_app.Domain.repository.NS_SEMKRepository
+import com.example.first_app.Domain.repository.StorageRepository
 
-class DatabaseRepository (context: Context) : NS_SEMKRepository {
+class StorageRepositoryImp (context: Context): StorageRepository {
+
     private val db = AppDatabase.getDatabase(context)
     private val nsSemkDao = db.nsSemkDao()
 
-
-    override suspend fun insertNS_SEMK(ns_semk: NS_SEMK) {
+    override suspend fun insertData(ns_semk: NS_SEMK) {
         nsSemkDao.insertNS_SEMK(ns_semk)
     }
 
-    override fun getAllNS_SEMK(): LiveData<List<NS_SEMK>> {
+    override fun getAllData(): LiveData<List<NS_SEMK>> {
         return nsSemkDao.getAllNS_SEMK()
     }
 
-    override suspend fun deleteNS_SEMK() {
+    override suspend fun deleteAllData() {
         nsSemkDao.deleteAllNS_SEMK()
     }
 }

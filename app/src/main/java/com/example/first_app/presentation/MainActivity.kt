@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
-import com.example.first_app.Data.Repository.DatabaseRepository
+import com.example.first_app.Data.Repository.DatabaseRepositoryImp
+import com.example.first_app.Data.Repository.StorageRepositoryImp
+import com.example.first_app.Domain.repository.StorageRepository
 import com.example.first_app.ui.theme.First_appTheme
 
 class MainActivity : ComponentActivity() {
@@ -15,8 +17,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val repository = DatabaseRepository(context = this)
-        val factory = MainViewModelFactory(repository)
+        val repositoryStorage = StorageRepositoryImp(context = this)
+        val dataRepository = DatabaseRepositoryImp(repositoryStorage)
+        val factory = MainViewModelFactory(dataRepository)
         viewModel = ViewModelProvider(this, factory).get(MainViewModel::class.java)
 
         setContent {

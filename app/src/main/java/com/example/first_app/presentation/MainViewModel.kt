@@ -7,18 +7,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.first_app.Data.Repository.RepositoryParcer
 import com.example.first_app.Data.models.Root
-import com.example.first_app.Domain.repository.NS_SEMKRepository
+import com.example.first_app.Domain.repository.DatabaseRepository
+import com.example.first_app.Domain.repository.StorageRepository
 import com.example.first_app.Domain.usecase.DeleteData
 import com.example.first_app.Domain.usecase.GetData
 import com.example.first_app.Domain.usecase.InsertData
 import kotlinx.coroutines.launch
 
-class MainViewModel(private val repository: NS_SEMKRepository) : ViewModel()  {
+class MainViewModel(private val dataRepository: DatabaseRepository) : ViewModel()  {
 
 
-    private val insertUseCase = InsertData(repository)
-    private val getAllNS_SEMKUseCase = GetData(repository)
-    private val deleteAllNS_SEMKUseCase = DeleteData(repository)
+    private val insertUseCase = InsertData(dataRepository)
+    private val getAllNS_SEMKUseCase = GetData(dataRepository)
+    private val deleteAllNS_SEMKUseCase = DeleteData(dataRepository)
 
     private val _orientation = MutableLiveData("Vertical")
     val orientation: LiveData<String> = _orientation
