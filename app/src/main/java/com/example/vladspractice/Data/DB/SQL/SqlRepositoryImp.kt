@@ -2,7 +2,9 @@ package com.example.vladspractice.Data.DB.SQL
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteException
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -22,63 +24,73 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
     private var openCounter = 0
 
 
-    override suspend fun insertData(ns_semkList: List<NS_SEMK>) {
+    override suspend fun insertData(dataList: List<ContentValues>) {
         openDB()
-
+        var count = 0
         CoroutineScope(Dispatchers.IO).launch {
-            val jobs = ns_semkList.map { nsSemk ->
-                launch {
-                    val values = ContentValues().apply {
-                        put(MyNameSQLite.COLUMN_KMC, nsSemk.KMC)
-                        put(MyNameSQLite.COLUMN_KRK, nsSemk.KRK)
-                        put(MyNameSQLite.COLUMN_KT, nsSemk.KT)
-                        put(MyNameSQLite.COLUMN_EMK, nsSemk.EMK)
-                        put(MyNameSQLite.COLUMN_PR, nsSemk.PR)
-                        put(MyNameSQLite.COLUMN_KTARA, nsSemk.KTARA)
-                        put(MyNameSQLite.COLUMN_GTIN, nsSemk.GTIN)
-                        put(MyNameSQLite.COLUMN_EMKPOD, nsSemk.EMKPOD)
-                    }
-                    Log.d("XMLparser", "Inserting into database: $nsSemk")
-
-                    db?.beginTransaction()
-                    try {
-                        db?.insert(MyNameSQLite.TABLE_NAME, null, values)
-                        db?.setTransactionSuccessful()
-                    } finally {
-                        db?.endTransaction()
-                    }
+            dataList.forEach { values ->
+                db?.beginTransaction()
+                try {
+                    count++
+                    Log.d("insertData", "$count inserted $values")
+                    db?.insert(MyNameSQLite.TABLE_NAME, null, values)
+                    db?.setTransactionSuccessful()
+                } catch (e: Exception) {
+                    Log.e("DatabaseError", "Error while inserting data", e)
+                } finally {
+                    db?.endTransaction()
                 }
             }
-            jobs.forEach { it.join() }
             closeDb()
         }
     }
 
-    override fun getAllData(): LiveData<List<NS_SEMK>> {
-        val liveData = MutableLiveData<List<NS_SEMK>>()
+    override fun getAllData(
+        tableName: String,
+        selectedColumn: String?,
+        selectedValue: String?,
+        listColumnsForReturn: List<String>
+    ): LiveData<List<ContentValues>> {
+        val liveData = MutableLiveData<List<ContentValues>>()
         openDB()
 
         CoroutineScope(Dispatchers.IO).launch {
-            val dataList = ArrayList<NS_SEMK>()
-            val cursor = dbHelper.readableDatabase.query(
-                MyNameSQLite.TABLE_NAME, null, null, null, null, null, null
-            )
+            val dataList = mutableListOf<ContentValues>()
+            var cursor: Cursor? = null
+            try {
+                val columns = if (listColumnsForReturn.isEmpty()) null else listColumnsForReturn.toTypedArray()
+                val selection = selectedColumn?.let { "$selectedColumn=?" }
+                val selectionArgs = selectedValue?.let { arrayOf(it) }
 
-            while (cursor.moveToNext()) {
-                val nsSemk = NS_SEMK(
-                    KMC = cursor.getColumnIndex(MyNameSQLite.COLUMN_KMC).let { if (it != -1) cursor.getString(it) else null },
-                    KRK = cursor.getColumnIndex(MyNameSQLite.COLUMN_KRK).let { if (it != -1) cursor.getString(it) else null },
-                    KT = cursor.getColumnIndex(MyNameSQLite.COLUMN_KT).let { if (it != -1) cursor.getString(it) else null },
-                    EMK = cursor.getColumnIndex(MyNameSQLite.COLUMN_EMK).let { if (it != -1) cursor.getString(it) else "" },
-                    PR = cursor.getColumnIndex(MyNameSQLite.COLUMN_PR).let { if (it != -1) cursor.getString(it) else null },
-                    KTARA = cursor.getColumnIndex(MyNameSQLite.COLUMN_KTARA).let { if (it != -1) cursor.getString(it) else "" },
-                    GTIN = cursor.getColumnIndex(MyNameSQLite.COLUMN_GTIN).let { if (it != -1) cursor.getString(it) else null },
-                    EMKPOD = cursor.getColumnIndex(MyNameSQLite.COLUMN_EMKPOD).let { if (it != -1) cursor.getString(it) else null }
+                cursor = dbHelper.readableDatabase.query(
+                    tableName,
+                    columns,
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    null
                 )
-                dataList.add(nsSemk)
+
+                while (cursor.moveToNext()) {
+                    val values = ContentValues()
+                    for (i in 0 until cursor.columnCount) {
+                        when (cursor.getType(i)) {
+                            Cursor.FIELD_TYPE_INTEGER -> values.put(cursor.getColumnName(i), cursor.getInt(i))
+                            Cursor.FIELD_TYPE_FLOAT -> values.put(cursor.getColumnName(i), cursor.getFloat(i))
+                            Cursor.FIELD_TYPE_STRING -> values.put(cursor.getColumnName(i), cursor.getString(i))
+                            Cursor.FIELD_TYPE_BLOB -> values.put(cursor.getColumnName(i), cursor.getBlob(i))
+                            Cursor.FIELD_TYPE_NULL -> values.putNull(cursor.getColumnName(i))
+                        }
+                    }
+                    dataList.add(values)
+                }
+            } catch (e: SQLiteException) {
+                e.printStackTrace()
+            } finally {
+                cursor?.close()
+                closeDb()
             }
-            cursor.close()
-            closeDb()
 
             withContext(Dispatchers.Main) {
                 liveData.value = dataList
@@ -88,20 +100,31 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
     }
 
 
-    override suspend fun deleteAllData() {
+    override suspend fun delete(tableName: String, selectedColumn: String?, selectedValue: String?) {
         openDB()
-        CoroutineScope(Dispatchers.IO).launch {
-            db?.beginTransaction()
-            try {
-                db?.execSQL("DELETE FROM ${MyNameSQLite.TABLE_NAME}")
-                db?.setTransactionSuccessful()
-            } catch (e: Exception) {
-                Log.e("DatabaseError", "Error while trying to delete all data", e)
-            } finally {
-                db?.endTransaction()
-                closeDb()
+        try {
+            val db = dbHelper.writableDatabase
+            if (selectedColumn == null || selectedValue == null) {
+                db.delete(tableName, null, null)
+                Log.d("SqlRepositoryImp", "Deleted all rows from $tableName")
+            } else {
+                val whereClause = "$selectedColumn = ?"
+                val whereArgs = arrayOf(selectedValue)
+                db.delete(tableName, whereClause, whereArgs)
+                Log.d("SqlRepositoryImp", "Deleted rows from $tableName where $selectedColumn = $selectedValue")
             }
+        } catch (e: SQLiteException) {
+            Log.e("SqlRepositoryImp", "Error deleting rows from $tableName", e)
+        } finally {
+            closeDb()
         }
+    }
+
+    override fun createTable(CREATE_TABLE: String) {
+        openDB()
+        db?.execSQL(CREATE_TABLE)
+        Log.d("SqlRepositoryImp", "Table created successfully")
+        closeDb()
     }
 
     fun openDB(){

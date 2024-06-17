@@ -1,16 +1,20 @@
 package com.example.vladspractice.Data.util
 
+import android.content.ContentValues
 import android.content.Context
 import android.util.Log
+import com.example.vladspractice.Domain.models.DataSQL
 import com.example.vladspractice.Domain.models.NS_SEMK
 import com.example.vladspractice.Domain.models.Root
 import com.google.gson.GsonBuilder
+import org.xml.sax.SAXException
 import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
-import java.util.Stack
+import javax.xml.parsers.ParserConfigurationException
 
 
 class Helper {
@@ -25,6 +29,7 @@ class Helper {
                         while (bufferedReader.readLine().also { line = it } != null) {
                             stringBuilder.append(line)
                         }
+                        Log.d("File", stringBuilder.toString())
                         return stringBuilder.toString()
                     }
                 }
@@ -34,92 +39,31 @@ class Helper {
             return null
         }
     }
-
-    fun parserXML(xmlString: String): List<NS_SEMK> {
-        val startTime = System.nanoTime()
-
-        val parser = XmlPullParserFactory.newInstance().newPullParser()
-        parser.setInput(xmlString.reader())
-
-        val tags = Stack<String>()
-
-        var KMC_text = ""
-        var KRK_text = ""
-        var KT_text = ""
-        var EMK_text = ""
-        var PR_text = ""
-        var KTARA_text = ""
-        var GTIN_text: String? = null
-        var EMKPOD_text = ""
-        val NS_SEMK_list = mutableListOf<NS_SEMK>()
-
-        var eventType = parser.eventType
-        while (eventType != XmlPullParser.END_DOCUMENT) {
-            when (eventType) {
-                XmlPullParser.START_TAG -> {
-                    tags.push(parser.name)
-                }
-                XmlPullParser.TEXT -> {
-                    when (tags.peek()) {
-                        "KMC" -> KMC_text += parser.text
-                        "KRK" -> KRK_text += parser.text
-                        "KT" -> KT_text += parser.text
-                        "EMK" -> EMK_text += parser.text
-                        "PR" -> PR_text += parser.text
-                        "KTARA" -> KTARA_text += parser.text
-                        "GTIN" -> GTIN_text = parser.text
-                        "EMKPOD" -> EMKPOD_text += parser.text
-                    }
-                }
-                XmlPullParser.END_TAG -> {
-                    when (parser.name) {
-                        "NS_SEMK" -> {
-                            NS_SEMK_list.add(
-                                NS_SEMK(
-                                    KMC = KMC_text,
-                                    KRK = KRK_text,
-                                    KT = KT_text,
-                                    EMK = EMK_text,
-                                    PR = PR_text,
-                                    KTARA = KTARA_text,
-                                    GTIN = GTIN_text,
-                                    EMKPOD = EMKPOD_text
-                                )
-                            )
-                            KMC_text = ""
-                            KRK_text = ""
-                            KT_text = ""
-                            EMK_text = ""
-                            PR_text = ""
-                            KTARA_text = ""
-                            GTIN_text = null
-                            EMKPOD_text = ""
-                        }
-                    }
-                    tags.pop()
-                }
-            }
-            eventType = parser.next()
-        }
-
-        val endTime = System.nanoTime()
-        val duration = (endTime - startTime) / 1_000_000.0
-        Log.d("XMLparser", "Time parsing $duration")
-        return NS_SEMK_list
+    fun parserXML(context: Context ,fileName: String):List<ContentValues> {
+        var java = Java()
+        return java.parce(context.assets.open(fileName))
     }
 
 
+
+    fun parseJsonRequest(jsonString: String): DataSQL? {
+        return try {
+            val gson = GsonBuilder().create()
+            val requet = gson.fromJson(jsonString, DataSQL::class.java)
+            Log.d("parseJsonRequest", requet.DATA)
+            requet
+        }catch (e: Exception){
+            Log.e("JsonManager", "Error PARSING", e)
+            null
+        }
+    }
+
     fun parseJSON(jsonString: String): List<NS_SEMK>? {
         return try {
-            val startTime = System.nanoTime()
-
             val gson = GsonBuilder().create()
             val root = gson.fromJson(jsonString, Root::class.java)
             val nsSemkList = root.NS_SEMK
 
-            val endTime = System.nanoTime()
-            val duration = (endTime - startTime) / 1_000_000.0
-            Log.d("JSONparser", "Time parsing: $duration ms")
 
             nsSemkList
         } catch (e: Exception) {
@@ -128,5 +72,55 @@ class Helper {
         }
     }
 
+    fun parserXMLold(xmlString: String): List<ContentValues> {
+        val dataList = mutableListOf<ContentValues>()
+        var currentValues: ContentValues? = null
+        var currentTag: String? = null
+        var count = 0
+        try {
+            val factory = XmlPullParserFactory.newInstance()
+            val parser = factory.newPullParser()
+            parser.setInput(xmlString.reader())
+
+            var eventType = parser.eventType
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                when (eventType) {
+                    XmlPullParser.START_TAG -> {
+                        currentTag = parser.name
+                        if (currentTag == "NS_SEMK") {
+                            currentValues = ContentValues()
+                        }
+                    }
+                    XmlPullParser.TEXT -> {
+                        currentTag?.let {
+                            val text = parser.text.trim()
+                            if (text.isNotEmpty()) {
+                                Log.d("XMLParser", " it $it Added text: $text")
+                                currentValues?.put(it, text)
+                            }
+                        }
+                    }
+                    XmlPullParser.END_TAG -> {
+                        if (parser.name == "NS_SEMK") {
+                            currentValues?.let {
+                                dataList.add(it)
+                                count++
+                                Log.d("XMLParser", "$count Added ContentValues: $it")
+                            }
+                            currentValues = null
+                        }
+                        currentTag = null
+                    }
+                }
+                eventType = parser.next()
+            }
+        } catch (e: XmlPullParserException) {
+            e.printStackTrace()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
+        return dataList
+    }
 
 }

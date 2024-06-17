@@ -1,5 +1,6 @@
 package com.example.vladspractice.presentation
 
+import android.content.res.AssetManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
@@ -17,25 +18,39 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.currentComposer
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import com.example.vladspractice.Data.util.Java
+import java.io.FileInputStream
+import java.io.InputStream
+import java.io.StringReader
+import javax.xml.parsers.DocumentBuilderFactory
+import org.intellij.lang.annotations.Language
+import org.w3c.dom.Element
+import org.w3c.dom.Node
+import org.w3c.dom.NodeList
+
 
 
 @Composable
 fun MainContent(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel,
-    activity: ComponentActivity,
+    navController: NavHostController,
 ) {
     val orientationState by viewModel.orientation.observeAsState("Vertical")
     val ktaraList by viewModel.ktaraList.observeAsState(emptyList())
     val durationTime by viewModel.durationTime.observeAsState(0.0)
+    val context = LocalContext.current
 
     Box(
         modifier = modifier.fillMaxSize()
@@ -50,20 +65,33 @@ fun MainContent(
             MyButton(text = "Click me") {
                 viewModel.rotateScreen()
             }
-
+            MyButton(text = "New page") {
+                navController.navigate("table_screen")
+            }
             MyButton(text = "Read XML") {
 
-                viewModel.writeToBd(context = activity, fileName = "NS_SEMK_.xml")
+
+
+
+                viewModel.writeToBd(context = context, fileName = "NS_SEMK_.xml")
                 Log.d("Read XML", "Success")
                 viewModel.updateDurationTime(1.0)
             }
 
             MyButton(text = "SQLite") {
-                viewModel.getDataFromBd()
+
+                val tableName = "NS_SEMK"
+                val selectedColumn = null
+                val selectedValue = null
+                val listColumnsForReturn = emptyList<String>()
+                //val listColumnsForReturn = listOf("KMC", "KRK", "KT")
+                viewModel.getDataFromBd(tableName, selectedColumn, selectedValue, listColumnsForReturn)
+
+
             }
 
             MyButton(text = "Clear BD") {
-                viewModel.deleteDataFromBd(context = activity)
+                viewModel.deleteDataFromBd("NS_SEMK", null,null)
             }
 
             ktaraList.forEachIndexed { index, ktara ->
@@ -97,7 +125,7 @@ fun MyButton(text: String, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         modifier = Modifier
-            .size(width = 120.dp, height = 40.dp)
+            .size(width = 130.dp, height = 40.dp)
             .padding(top = 5.dp),
         shape = RoundedCornerShape(17.dp),
         colors = ButtonDefaults.buttonColors(

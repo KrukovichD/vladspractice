@@ -5,8 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.vladspractice.Data.DB.SQL.SqlRepositoryImp
 import com.example.vladspractice.Data.Repository.DatabaseRepositoryImp
 import com.example.vladspractice.Data.Repository.ParserRepositoryImp
@@ -29,10 +33,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             First_appTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainContent(
+
+                    AppNavigation(
                         modifier = Modifier.padding(innerPadding),
                         viewModel = viewModel,
-                        activity = this,
                     )
                 }
             }
@@ -41,3 +45,16 @@ class MainActivity : ComponentActivity() {
 
 }
 
+@Composable
+fun AppNavigation(    modifier: Modifier = Modifier,
+                      viewModel: MainViewModel,){
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "main_screen" ) {
+        composable("main_screen"){
+            MainContent(viewModel = viewModel, navController = navController)
+        }
+        composable("table_screen"){
+            TableScreen(viewModel =  viewModel, navController = navController)
+        }
+    }
+}

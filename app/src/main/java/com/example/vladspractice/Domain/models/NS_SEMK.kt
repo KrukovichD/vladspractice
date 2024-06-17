@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "ns_semk")
-data class NS_SEMK(
+    data class NS_SEMK(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val KMC: String?,
     val KRK: String?,

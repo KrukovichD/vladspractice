@@ -52,6 +52,7 @@ android {
 
 dependencies {
 
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -69,6 +70,16 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+
+    implementation ("androidx.compose.foundation:foundation:1.3.0")
+    implementation ("androidx.compose.material3:material3:1.1.0")
+    implementation ("androidx.compose.runtime:runtime-livedata:1.3.0")
+
+
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    val nav_version = "2.7.7"
+    implementation("androidx.navigation:navigation-compose:$nav_version")
 
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
