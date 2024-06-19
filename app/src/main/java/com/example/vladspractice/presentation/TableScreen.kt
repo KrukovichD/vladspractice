@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -49,18 +50,17 @@ fun TableScreen(viewModel: MainViewModel, navController: NavHostController) {
     val context = LocalContext.current
     val request by viewModel.request.observeAsState("")
     val dataList by viewModel.dataList.observeAsState(emptyList())
-    val tableName = remember { mutableStateOf("") }
 
     Box(modifier = Modifier
         .fillMaxSize()
         .background(Color.White)) {
 
         Column {
-            ColumnSelectionScreen(viewModel)
-            Spacer(modifier = Modifier.height(16.dp))
-            MyButton(text ="Получить данные из БД" ) {
+/*            ColumnSelectionScreen(viewModel)
+            Spacer(modifier = Modifier.height(16.dp))*/
+/*            MyButton(text ="Получить данные из БД" ) {
                 viewModel.fetchDataFromDb()
-            }
+            }*/
             //InputRow(tableName)
             //buttonPlace(viewModel, navController)
             dataTable(dataList)
@@ -128,6 +128,7 @@ fun InputRow(tableName: MutableState<String>){
         )
     }
 }
+
 @Composable
 fun dataTable(dataList: List<ContentValues>) {
     val scrollStateHorizontal = rememberScrollState()
@@ -136,7 +137,7 @@ fun dataTable(dataList: List<ContentValues>) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(8.dp)
+            .padding(5.dp)
             .background(Color.White)
             .horizontalScroll(scrollStateHorizontal)
             .verticalScroll(scrollStateVertical)
@@ -156,6 +157,7 @@ fun dataTable(dataList: List<ContentValues>) {
             TableHeader(text = "KMC", 120)
             TableHeader(text = "KTARA", 120)
             TableHeader(text = "GTIN", 120)
+            TableHeader(text = "id", 120)
 
         }
 
@@ -163,7 +165,7 @@ fun dataTable(dataList: List<ContentValues>) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(5.dp)
+                    .padding(start = 5.dp)
                     .background(if (index % 2 == 0) Color.White else Color.LightGray)
             ) {
                 TableCell(text = (index+1).toString(), 20)
@@ -175,7 +177,7 @@ fun dataTable(dataList: List<ContentValues>) {
                 TableCell(text = contentValues.getAsString("KMC") ?: "", 120)
                 TableCell(text = contentValues.getAsString("KTARA") ?: "", 120)
                 TableCell(text = contentValues.getAsString("GTIN") ?: "", 120)
-
+                TableCell(text = contentValues.getAsString("id") ?: "", 120)
             }
         }
     }

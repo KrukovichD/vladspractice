@@ -12,6 +12,8 @@ interface DatabaseRepository {
         selectedValue: String?,
         listColumnsForReturn: List<String>): LiveData<List<ContentValues>>
     suspend fun deleteDataDb(tableName: String, selectedColumn: String?, selectedValue: String?)
-    suspend fun getFirstItem(): NS_SEMK?
+    fun getListTable(LIST_TABLE: String):List<String>
+
     fun createTable(CREATE_TABLE: String)
+    fun getListTableFields(tableName: String): List<String>
 }

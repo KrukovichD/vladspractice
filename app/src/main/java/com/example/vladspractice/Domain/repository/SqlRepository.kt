@@ -9,7 +9,7 @@ interface SqlRepository {
 
 
 
-    fun getAllData(
+    fun getData(
         tableName: String,
         selectedColumn: String?,
         selectedValue: String?,
@@ -18,4 +18,6 @@ interface SqlRepository {
     suspend fun delete(tableName: String, selectedColumn: String?, selectedValue: String?)
 
     fun createTable(CREATE_TABLE: String)
+    fun getListTable(LIST_TABLE: String):List<String>
+    fun getListTableFields(tableName: String): List<String>
 }

@@ -56,5 +56,8 @@ fun AppNavigation(    modifier: Modifier = Modifier,
         composable("table_screen"){
             TableScreen(viewModel =  viewModel, navController = navController)
         }
+        composable("setting_page"){
+            SettingPage(viewModel =  viewModel, navController = navController)
+        }
     }
 }

@@ -45,7 +45,7 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
         }
     }
 
-    override fun getAllData(
+    override fun getData(
         tableName: String,
         selectedColumn: String?,
         selectedValue: String?,
@@ -126,6 +126,46 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
         Log.d("SqlRepositoryImp", "Table created successfully")
         closeDb()
     }
+
+
+    override fun getListTableFields(tableName: String): List<String> {
+        val db = dbHelper.readableDatabase
+        val fieldNames = mutableListOf<String>()
+
+        db.rawQuery("PRAGMA table_info($tableName)", null).use { cursor ->
+            val nameIndex = cursor.getColumnIndex("name")
+
+            while (cursor.moveToNext()) {
+                if (nameIndex != -1) {
+                    val name = cursor.getString(nameIndex)
+                    fieldNames.add(name)
+                } else {
+                    throw IllegalStateException("Column not found ")
+                }
+            }
+        }
+
+        db.close()
+        return fieldNames
+    }
+
+    override fun getListTable(LIST_TABLE: String): List<String> {
+        val db = dbHelper.readableDatabase
+        val cursor = db.rawQuery(LIST_TABLE, null)
+        val tableNames = mutableListOf<String>()
+
+        if (cursor.moveToFirst()) {
+            while (!cursor.isAfterLast) {
+                tableNames.add(cursor.getString(0))
+                cursor.moveToNext()
+            }
+        }
+
+        cursor.close()
+        db.close()
+        return tableNames
+    }
+
 
     fun openDB(){
 

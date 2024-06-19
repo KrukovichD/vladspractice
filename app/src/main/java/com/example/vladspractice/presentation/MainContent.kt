@@ -48,8 +48,6 @@ fun MainContent(
     navController: NavHostController,
 ) {
     val orientationState by viewModel.orientation.observeAsState("Vertical")
-    val ktaraList by viewModel.ktaraList.observeAsState(emptyList())
-    val durationTime by viewModel.durationTime.observeAsState(0.0)
     val context = LocalContext.current
 
     Box(
@@ -65,20 +63,23 @@ fun MainContent(
             MyButton(text = "Click me") {
                 viewModel.rotateScreen()
             }
-            MyButton(text = "New page") {
+            MyButton(text = "Table") {
                 navController.navigate("table_screen")
             }
+
+            MyButton(text = "Setting Table") {
+                viewModel.getListOfTableBd()
+                viewModel.getListTableField()
+                navController.navigate("setting_page")
+            }
+
             MyButton(text = "Read XML") {
-
-
-
 
                 viewModel.writeToBd(context = context, fileName = "NS_SEMK_.xml")
                 Log.d("Read XML", "Success")
-                viewModel.updateDurationTime(1.0)
             }
 
-            MyButton(text = "SQLite") {
+/*            MyButton(text = "SQLite") {
 
                 val tableName = "NS_SEMK"
                 val selectedColumn = null
@@ -88,17 +89,19 @@ fun MainContent(
                 viewModel.getDataFromBd(tableName, selectedColumn, selectedValue, listColumnsForReturn)
 
 
-            }
+            }*/
 
             MyButton(text = "Clear BD") {
                 viewModel.deleteDataFromBd("NS_SEMK", null,null)
             }
 
-            ktaraList.forEachIndexed { index, ktara ->
-                Text(text = "KTARA ${index + 1}: $ktara")
+            MyButton(text = "Create Table") {
+                viewModel.createTable(context, "request.json")
             }
-
-            Text(text = "Ready: $durationTime")
+            MyButton(text = "GetListTable") {
+                viewModel.getListOfTableBd()
+                viewModel.getListTableField()
+            }
         }
     }
 }

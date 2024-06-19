@@ -21,7 +21,8 @@ class DatabaseRepositoryImp(private val repository: StorageRepository, private v
         selectedColumn: String?,
         selectedValue: String?,
         listColumnsForReturn: List<String>): LiveData<List<ContentValues>> {
-        return sqlRepository.getAllData(tableName,null, null,listColumnsForReturn)
+
+        return sqlRepository.getData(tableName,selectedColumn, selectedValue,listColumnsForReturn)
 
     }
 
@@ -29,11 +30,16 @@ class DatabaseRepositoryImp(private val repository: StorageRepository, private v
         return sqlRepository.delete(tableName, selectedColumn, selectedValue)
     }
 
-    override suspend fun getFirstItem(): NS_SEMK? {
-        return repository.getFirstItem()
+    override fun getListTable(LIST_TABLE: String): List<String> {
+        return sqlRepository.getListTable(LIST_TABLE)
     }
+
 
     override fun createTable(CREATE_TABLE: String) {
         sqlRepository.createTable(CREATE_TABLE)
+    }
+
+    override fun getListTableFields(tableName: String): List<String> {
+        return sqlRepository.getListTableFields(tableName)
     }
 }
