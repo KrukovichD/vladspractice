@@ -3,7 +3,7 @@ package com.example.vladspractice.Domain.usecase
 import com.example.vladspractice.Domain.repository.DatabaseRepository
 
 class GetListTableBdUseCase(private val dataRepository: DatabaseRepository) {
-    suspend fun invoke(LIST_TABLE: String): List<String>{
-        return dataRepository.getListTable(LIST_TABLE)
+    suspend fun invoke(): List<String>{
+        return dataRepository.getListTable()
     }
 }

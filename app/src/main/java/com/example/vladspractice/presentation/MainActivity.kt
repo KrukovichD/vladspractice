@@ -3,10 +3,19 @@ package com.example.vladspractice.presentation
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -17,6 +26,7 @@ import com.example.vladspractice.Data.Repository.ParserRepositoryImp
 import com.example.vladspractice.Data.Repository.StorageRepositoryImp
 import com.example.vladspractice.Domain.repository.SqlRepository
 import com.example.vladspractice.ui.theme.First_appTheme
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     private lateinit var viewModel: MainViewModel
@@ -32,6 +42,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             First_appTheme {
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
                     AppNavigation(
@@ -40,6 +51,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
+
         }
     }
 

@@ -7,22 +7,24 @@ import com.example.vladspractice.Domain.models.NS_SEMK
 import com.example.vladspractice.Domain.repository.DatabaseRepository
 import com.example.vladspractice.Domain.repository.SqlRepository
 import com.example.vladspractice.Domain.repository.StorageRepository
+import com.example.vladspractice.presentation.MainViewModel
 
 class DatabaseRepositoryImp(private val repository: StorageRepository, private val sqlRepository: SqlRepository): DatabaseRepository {
 
-    override suspend fun insertDataToDb(contentValuesList: List<ContentValues>) {
+    override suspend fun insertDataToDb(contentValuesList: List<ContentValues>, TABLE_NAME: String, viewModel: MainViewModel) {
 
-        return sqlRepository.insertData(contentValuesList)
+        return sqlRepository.insertData(contentValuesList, TABLE_NAME, viewModel)
     }
 
 
     override fun getDataDb(
         tableName: String,
         selectedColumns: Map<String, String?>,
-        listColumnsForReturn: List<String>
+        listColumnsForReturn: List<String>,
+        viewModel: MainViewModel
     ): LiveData<List<ContentValues>> {
 
-        return sqlRepository.getData(tableName,selectedColumns,listColumnsForReturn)
+        return sqlRepository.getData(tableName,selectedColumns,listColumnsForReturn,viewModel)
 
     }
 
@@ -30,8 +32,8 @@ class DatabaseRepositoryImp(private val repository: StorageRepository, private v
         return sqlRepository.delete(tableName, selectedColumn, selectedValue)
     }
 
-    override suspend fun getListTable(LIST_TABLE: String): List<String> {
-        return sqlRepository.getListTable(LIST_TABLE)
+    override suspend fun getListTable(): List<String> {
+        return sqlRepository.getListTable()
     }
 
 

@@ -51,14 +51,12 @@ fun SettingPage(viewModel: MainViewModel, navController: NavController) {
     var context = LocalContext.current
     Column {
         DropDown(viewModel)
-/*        MyButton(text = "getInfo") {
-            viewModel.getInfo(context)
-        }*/
         MyButton(text ="Получить данные из БД" ) {
-            viewModel.fetchDataFromDb()
+            viewModel.fetchDataFromDb(viewModel)
             navController.navigate("table_screen")
         }
         ColumnSelectionScreen(viewModel)
+
     }
 
     LaunchedEffect(viewModel.selectedTable) {
@@ -139,7 +137,6 @@ fun ColumnSelectionScreen(viewModel: MainViewModel) {
                             }
                         )
 
-                        // Text field for value input
                         var text by rememberSaveable { mutableStateOf("") }
                         TextField(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),

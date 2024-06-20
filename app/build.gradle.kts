@@ -72,9 +72,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
 
-    implementation ("androidx.compose.foundation:foundation:1.3.0")
-    implementation ("androidx.compose.material3:material3:1.1.0")
-    implementation ("androidx.compose.runtime:runtime-livedata:1.3.0")
+    implementation ("androidx.compose.foundation:foundation:1.6.8")
+    implementation ("androidx.compose.material3:material3:1.2.1")
+    implementation ("androidx.compose.runtime:runtime-livedata:1.6.8")
 
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib")

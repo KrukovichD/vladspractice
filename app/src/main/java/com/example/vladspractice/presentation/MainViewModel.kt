@@ -22,7 +22,13 @@ import com.example.vladspractice.Domain.usecase.GetListTableBdUseCase
 import com.example.vladspractice.Domain.usecase.GetListTableFieldsUseCase
 import com.example.vladspractice.Domain.usecase.GetRequestUseCase
 import com.example.vladspractice.Domain.usecase.InsertDataUseCase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainViewModel(private val dataRepository: DatabaseRepository,  private val fileRepository: ParserRepository) : ViewModel()  {
 
@@ -55,7 +61,7 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
     var CREATE_TABLE: String? = null
 
     private val _selectedColumnsReturn = mutableStateListOf<String>()
-    val selectedColumnsReturn: List<String> = _selectedColumnsReturn
+    val selectedColumnsReturn: List<String> get()= _selectedColumnsReturn
 
     private val _tableNames = MutableLiveData<List<String>>()
     val tableNames: LiveData<List<String>>  get() = _tableNames
@@ -63,39 +69,69 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
     private val _tableField = MutableLiveData <List<String>>()
     val tableField: LiveData<List<String>>  get() = _tableField
 
+    private val _progress = MutableLiveData<Int>()
+    val progress: LiveData<Int> = _progress
 
+
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _isInsert = MutableStateFlow(false)
+    val isInsert: StateFlow<Boolean> = _isInsert.asStateFlow()
+
+    private val _valueLoading = MutableStateFlow(0)
+    val valueLoading: StateFlow<Int> = _valueLoading.asStateFlow()
+
+    fun updateIsLoading(value: Boolean) {
+        _isLoading.value = value
+    }
+
+    fun updateValueLoading(value: Int) {
+        _valueLoading.value = value
+    }
+    fun setInsert(isLoading: Boolean) {
+        _isInsert.value = isLoading
+    }
+
+    fun setLoading(isLoading: Boolean) {
+        _isLoading.value = isLoading
+    }
     fun rotateScreen() {
         _orientation.value = if (_orientation.value == "Vertical") "Horizontal" else "Vertical"
     }
 
     fun getInfo(context: Context){
-        Log.d("MainViewModel", "_selectedColumns: $_selectedColumns")
+        Log.d("MainViewModel", "_selectedColumns: ${_isLoading.value} and ${isLoading.value}")
     }
-    fun writeToBd(context: Context, fileName: String) {
 
-        viewModelScope.launch {
-            insertUseCase.invoke(getDataFile.getXmlData(context, fileName))
+    fun writeToBd(context: Context, fileName: String, viewModel: MainViewModel) {
+
+        if (selectedTable.isNotEmpty()) {
+            viewModel.setInsert(true)
+            viewModelScope.launch {
+                withContext(Dispatchers.IO) {
+                    val dataList = getDataFile.getXmlData(context, fileName)
+                    insertUseCase.invoke(dataList, selectedTable, viewModel)
+                }
+            }
         }
-
     }
+
     fun getListTableField(){
         viewModelScope.launch {
             if (selectedTable != ""){
                 _tableField.value = getListTableFieldsUseCase.invoke("$selectedTable")
                 _tableField.observeForever { item ->
-                    Log.d("List Table" , "$item")
+                    Log.d("List TableField" , "$item")
                 }
             }
         }
-
-
     }
+
     fun getListOfTableBd(){
-        var LIST_TABLE = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT IN ('sqlite_sequence', 'android_metadata')"
-
         viewModelScope.launch {
-            _tableNames.value= getListTable.invoke(LIST_TABLE)
-
+            _tableNames.value= getListTable.invoke()
             _tableNames.observeForever { item ->
                 Log.d("List Table" , "$item")
             }
@@ -107,22 +143,27 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
     fun getDataFromBd(
         tableName: String,
         selectedColumns: Map<String, String?>,
-        listColumnsForReturn: List<String>
+        listColumnsForReturn: List<String>,
+        viewModel: MainViewModel
     ) {
-        viewModelScope.launch {
-            val data = getDataseCase.invoke(tableName,selectedColumns, listColumnsForReturn)
-            data.observeForever { dataList ->
-                _dataList.postValue(dataList)
-                Log.d("MainViewModel", "Data list updated: $dataList")
-            }
-            data.observeForever { dataList ->
-                dataList?.let { list ->
-                    for (contentValues in list) {
-                        Log.d("LiveDataContent", "ContentValues: $contentValues")
-                    }
+        if(listColumnsForReturn.isNotEmpty()){
+            viewModelScope.launch {
+
+                val data = getDataseCase.invoke(tableName,selectedColumns, listColumnsForReturn, viewModel)
+                data.observeForever { dataList ->
+                    _dataList.postValue(dataList)
+                    Log.d("MainViewModel", "Data list updated: $dataList")
                 }
+/*                data.observeForever { dataList ->
+                    dataList?.let { list ->
+                        for (contentValues in list) {
+                            Log.d("LiveDataContent", "ContentValues: $contentValues")
+                        }
+                    }
+                }*/
             }
         }
+
     }
 
     fun deleteDataFromBd(tableName: String, selectedColumn: String?, selectedValue: String?){
@@ -132,7 +173,9 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
     }
 
     fun createTable(context: Context, fileName: String){
+        var DELETE_Table = "DROP TABLE NS_MC"
         createTable.createTable(getJsonRequest(context, fileName))
+        //createTable.createTable(DELETE_Table)
     }
 
 
@@ -160,16 +203,22 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
     }
 
     fun removeColumnReturn(column: String?) {
-        column?.let { _selectedColumnsReturn.remove(it) } ?: _selectedColumnsReturn.clear()
-
+        if(column!= null){
+            _selectedColumnsReturn.remove(column)
+        } else
+        {
+            _selectedColumnsReturn.clear()
+            getListTableField()
+            _tableField.value?.let { fields ->
+                _selectedColumnsReturn.addAll(fields)
+            }
+        }
     }
 
-    // кнопка в таблице
-    fun fetchDataFromDb() {
 
-
+    fun fetchDataFromDb(viewModel: MainViewModel) {
         if(selectedTable != ""){
-                getDataFromBd(selectedTable, _selectedColumns,_selectedColumnsReturn)
+                getDataFromBd(selectedTable, _selectedColumns,_selectedColumnsReturn, viewModel)
         }
     }
 }

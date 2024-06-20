@@ -8,11 +8,14 @@ import android.database.sqlite.SQLiteException
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.first_app.Data.models.garbage.MyNameSQLite
 import com.example.vladspractice.Domain.models.NS_SEMK
 import com.example.vladspractice.Domain.repository.SqlRepository
+import com.example.vladspractice.presentation.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -24,16 +27,18 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
     private var openCounter = 0
 
 
-    override suspend fun insertData(dataList: List<ContentValues>) {
+    override suspend fun insertData(dataList: List<ContentValues>, TABLE_NAME: String, viewModel: MainViewModel) {
         openDB()
         var count = 0
         CoroutineScope(Dispatchers.IO).launch {
-            dataList.forEach { values ->
+            dataList.forEachIndexed { index, values ->
                 db?.beginTransaction()
                 try {
                     count++
-                    Log.d("insertData", "$count inserted $values")
-                    db?.insert(MyNameSQLite.TABLE_NAME, null, values)
+                    val progress = (count.toFloat() / dataList.size.toFloat()) * 100f
+                    viewModel.updateValueLoading(progress.toInt())
+                    Log.d("insertData", "$count/${dataList.size} progress $progress inserted $values")
+                    db?.insert(TABLE_NAME, null, values)
                     db?.setTransactionSuccessful()
                 } catch (e: Exception) {
                     Log.e("DatabaseError", "Error while inserting data", e)
@@ -42,16 +47,20 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
                 }
             }
             closeDb()
+            viewModel.updateIsLoading(false)
         }
     }
+
 
     override fun getData(
         tableName: String,
         selectedColumns: Map<String, String?>,
-        listColumnsForReturn: List<String>
+        listColumnsForReturn: List<String>,
+        viewModel: MainViewModel
     ): LiveData<List<ContentValues>> {
         val liveData = MutableLiveData<List<ContentValues>>()
         openDB()
+        viewModel.setLoading(true)
 
         CoroutineScope(Dispatchers.IO).launch {
             val dataList = mutableListOf<ContentValues>()
@@ -113,7 +122,9 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
             }
 
             withContext(Dispatchers.Main) {
+                delay(500)
                 liveData.value = dataList
+                viewModel.setLoading(false)
             }
         }
         return liveData
@@ -159,7 +170,9 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
             while (cursor.moveToNext()) {
                 if (nameIndex != -1) {
                     val name = cursor.getString(nameIndex)
-                    fieldNames.add(name)
+                    if (name!="id"){
+                        fieldNames.add(name)
+                    }
                 } else {
                     throw IllegalStateException("Column not found ")
                 }
@@ -169,9 +182,9 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
         return fieldNames
     }
 
-    override suspend fun getListTable(LIST_TABLE: String): List<String> {
+    override suspend fun getListTable(): List<String> {
         openDB()
-        val cursor = db!!.rawQuery(LIST_TABLE, null)
+        val cursor = db!!.rawQuery(MyNameSQLite.GET_LIST_TABLE, null)
         val tableNames = mutableListOf<String>()
 
         if (cursor.moveToFirst()) {
