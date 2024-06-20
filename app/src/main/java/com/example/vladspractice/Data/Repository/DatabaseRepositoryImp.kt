@@ -18,11 +18,11 @@ class DatabaseRepositoryImp(private val repository: StorageRepository, private v
 
     override fun getDataDb(
         tableName: String,
-        selectedColumn: String?,
-        selectedValue: String?,
-        listColumnsForReturn: List<String>): LiveData<List<ContentValues>> {
+        selectedColumns: Map<String, String?>,
+        listColumnsForReturn: List<String>
+    ): LiveData<List<ContentValues>> {
 
-        return sqlRepository.getData(tableName,selectedColumn, selectedValue,listColumnsForReturn)
+        return sqlRepository.getData(tableName,selectedColumns,listColumnsForReturn)
 
     }
 
@@ -30,7 +30,7 @@ class DatabaseRepositoryImp(private val repository: StorageRepository, private v
         return sqlRepository.delete(tableName, selectedColumn, selectedValue)
     }
 
-    override fun getListTable(LIST_TABLE: String): List<String> {
+    override suspend fun getListTable(LIST_TABLE: String): List<String> {
         return sqlRepository.getListTable(LIST_TABLE)
     }
 
@@ -39,7 +39,7 @@ class DatabaseRepositoryImp(private val repository: StorageRepository, private v
         sqlRepository.createTable(CREATE_TABLE)
     }
 
-    override fun getListTableFields(tableName: String): List<String> {
+    override suspend fun getListTableFields(tableName: String): List<String> {
         return sqlRepository.getListTableFields(tableName)
     }
 }

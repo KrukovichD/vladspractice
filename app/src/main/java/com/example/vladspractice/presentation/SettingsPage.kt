@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -47,60 +48,17 @@ import javax.sql.RowSetEvent
 
 @Composable
 fun SettingPage(viewModel: MainViewModel, navController: NavController) {
+    var context = LocalContext.current
     Column {
         DropDown(viewModel)
-        MyButton(text = "getInfo") {
-            viewModel.getInfo()
-        }
+/*        MyButton(text = "getInfo") {
+            viewModel.getInfo(context)
+        }*/
         MyButton(text ="Получить данные из БД" ) {
             viewModel.fetchDataFromDb()
             navController.navigate("table_screen")
         }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            var text by rememberSaveable { mutableStateOf("") }
-            Text(
-                text = "Поле",
-                modifier = Modifier.width(100.dp)
-            )
-            TextField(
-                modifier = Modifier.width(300.dp),
-                value = text,
-                onValueChange = { newText ->
-                    text = newText
-                    viewModel.selectedWhereColumn = if (newText.isEmpty()) null else newText
-                },
-                placeholder = {
-                    Text("Enter Column")
-                }
-            )
-
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            var text by rememberSaveable { mutableStateOf("") }
-            Text(
-                text = "Значение",
-                modifier = Modifier.width(100.dp)
-                )
-            TextField(
-                modifier = Modifier.width(300.dp),
-                value = text,
-                onValueChange = { newText ->
-                    text = newText
-                    viewModel.selectedWhereValue = if (newText.isEmpty()) null else newText
-                },
-                placeholder = {
-                    Text("Enter value")
-                }
-            )
-
-        }
-        ColumnSelectionScreen_(viewModel)
+        ColumnSelectionScreen(viewModel)
     }
 
     LaunchedEffect(viewModel.selectedTable) {
@@ -144,7 +102,7 @@ fun DropDown(viewModel: MainViewModel) {
                         onClick = {
                             viewModel.selectedTable = text
                             isExpanded = false
-                            viewModel.removeColumn(null)
+                            viewModel.removeColumnReturn(null)
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                     )
@@ -157,26 +115,48 @@ fun DropDown(viewModel: MainViewModel) {
 
 
 @Composable
-fun ColumnSelectionScreen_(viewModel: MainViewModel) {
+fun ColumnSelectionScreen(viewModel: MainViewModel) {
     val availableColumns by viewModel.tableField.observeAsState(emptyList())
-    val selectedColumns = viewModel.selectedColumns
+    val selectedColumns = viewModel.selectedColumnsReturn
 
     LazyColumn {
         itemsIndexed(availableColumns.chunked(6)) { rowIndex, rowColumns ->
-            Row {
+            Column {
                 rowColumns.forEach { column ->
                     val isSelected = selectedColumns.contains(column)
-                    ColumnSelectionItem_(
-                        column = column,
-                        isSelected = isSelected,
-                        onToggle = {
-                            if (isSelected) {
-                                viewModel.removeColumn(column)
-                            } else {
-                                viewModel.addColumn(column)
+                    Row(
+                        modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)
+                    ) {
+                        ColumnSelectionItem(
+                            column = column,
+                            isSelected = isSelected,
+                            onToggle = {
+                                if (isSelected) {
+                                    viewModel.removeColumnReturn(column)
+                                } else {
+                                    viewModel.addColumnReturn(column)
+                                }
                             }
-                        }
-                    )
+                        )
+
+                        // Text field for value input
+                        var text by rememberSaveable { mutableStateOf("") }
+                        TextField(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                            value = text,
+                            onValueChange = { newText ->
+                                text = newText
+                                if (newText.isEmpty()) {
+                                    viewModel.removeColumnValue(column)
+                                } else {
+                                    viewModel.addColumnValue(column, newText)
+                                }
+                            },
+                            placeholder = {
+                                Text("Enter value")
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -184,8 +164,10 @@ fun ColumnSelectionScreen_(viewModel: MainViewModel) {
 }
 
 
+
+
 @Composable
-fun ColumnSelectionItem_(column: String, isSelected: Boolean, onToggle: () -> Unit) {
+fun ColumnSelectionItem(column: String, isSelected: Boolean, onToggle: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)

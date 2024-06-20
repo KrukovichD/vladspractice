@@ -9,9 +9,9 @@ import com.example.vladspractice.Domain.repository.StorageRepository
 class GetDataUseCase(private val dataRepository: DatabaseRepository) {
     fun invoke(
         tableName: String,
-        selectedColumn: String?,
-        selectedValue: String?,
-        listColumnsForReturn: List<String>): LiveData<List<ContentValues>> {
-        return dataRepository.getDataDb(tableName, selectedColumn, selectedValue, listColumnsForReturn)
+        selectedColumns: Map<String, String?>,
+        listColumnsForReturn: List<String>
+    ): LiveData<List<ContentValues>> {
+        return dataRepository.getDataDb(tableName, selectedColumns, listColumnsForReturn)
     }
 }

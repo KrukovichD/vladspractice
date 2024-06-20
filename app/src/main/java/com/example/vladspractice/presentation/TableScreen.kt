@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -39,7 +40,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -47,8 +50,6 @@ import com.example.vladspractice.Domain.models.NS_SEMK
 
 @Composable
 fun TableScreen(viewModel: MainViewModel, navController: NavHostController) {
-    val context = LocalContext.current
-    val request by viewModel.request.observeAsState("")
     val dataList by viewModel.dataList.observeAsState(emptyList())
 
     Box(modifier = Modifier
@@ -56,130 +57,75 @@ fun TableScreen(viewModel: MainViewModel, navController: NavHostController) {
         .background(Color.White)) {
 
         Column {
-/*            ColumnSelectionScreen(viewModel)
-            Spacer(modifier = Modifier.height(16.dp))*/
-/*            MyButton(text ="Получить данные из БД" ) {
-                viewModel.fetchDataFromDb()
-            }*/
-            //InputRow(tableName)
-            //buttonPlace(viewModel, navController)
-            dataTable(dataList)
+            DataTable(dataList)
         }
 
     }
 }
-
-
 @Composable
-fun ColumnSelectionScreen(viewModel: MainViewModel) {
-    val availableColumns = listOf(
-        "KMC", "KRK", "KT", "EMK", "PR", "KTARA", "GTIN", "EMKPOD"
-    )
-    val selectedColumns = viewModel.selectedColumns
-
-    LazyColumn {
-        itemsIndexed(availableColumns.chunked(4)) { rowIndex, rowColumns ->
-            Row {
-                rowColumns.forEach { column ->
-                    val isSelected = selectedColumns.contains(column)
-                    ColumnSelectionItem(
-                        column = column,
-                        isSelected = isSelected,
-                        onToggle = {
-                            if (isSelected) {
-                                viewModel.removeColumn(column)
-                            } else {
-                                viewModel.addColumn(column)
-                            }
-                        }
-                    )
-                }
-            }
-        }
-    }
-
-
-
-}
-
-@Composable
-fun ColumnSelectionItem(column: String, isSelected: Boolean, onToggle: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)
-    ) {
-        Checkbox(
-            checked = isSelected,
-            onCheckedChange = { onToggle() },
-            modifier = Modifier.padding(end = 4.dp)
-        )
-        Text(text = column, style = MaterialTheme.typography.bodyMedium)
-    }
-}
-@Composable
-fun InputRow(tableName: MutableState<String>){
-
-    Column() {
-        OutlinedTextField(
-            value = tableName.value,
-            onValueChange = { newText -> tableName.value = newText },
-            label = { Text("Таблица") },
-            modifier = Modifier.padding(bottom = 8.dp).width(200.dp).height(60.dp)
-        )
-    }
-}
-
-@Composable
-fun dataTable(dataList: List<ContentValues>) {
+fun DataTable(dataList: List<ContentValues>) {
+    val scrollStateVertical = rememberLazyListState()
     val scrollStateHorizontal = rememberScrollState()
-    val scrollStateVertical = rememberScrollState()
 
-    Column(
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        state = scrollStateVertical,
         modifier = Modifier
             .fillMaxSize()
             .padding(5.dp)
             .background(Color.White)
-            .horizontalScroll(scrollStateHorizontal)
-            .verticalScroll(scrollStateVertical)
+            .horizontalScroll(scrollStateHorizontal) // Используем вертикальный scrollStateHorizontal
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.LightGray)
-                .padding(5.dp)
-        ) {
-            TableHeader(text = "№", 20)
-            TableHeader(text = "PR", 20)
-            TableHeader(text = "KRK", 50)
-            TableHeader(text = "KT", 50)
-            TableHeader(text = "EMK", 50)
-            TableHeader(text = "EMKPOD", 50)
-            TableHeader(text = "KMC", 120)
-            TableHeader(text = "KTARA", 120)
-            TableHeader(text = "GTIN", 120)
-            TableHeader(text = "id", 120)
-
+        item {
+            TableHeaderRow()
         }
 
-        dataList.forEachIndexed { index, contentValues ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 5.dp)
-                    .background(if (index % 2 == 0) Color.White else Color.LightGray)
-            ) {
-                TableCell(text = (index+1).toString(), 20)
-                TableCell(text = contentValues.getAsString("PR") ?: "", 20)
-                TableCell(text = contentValues.getAsString("KRK") ?: "", 50)
-                TableCell(text = contentValues.getAsString("KT") ?: "", 50)
-                TableCell(text = contentValues.getAsString("EMK") ?: "", 50)
-                TableCell(text = contentValues.getAsString("EMKPOD") ?: "", 50)
-                TableCell(text = contentValues.getAsString("KMC") ?: "", 120)
-                TableCell(text = contentValues.getAsString("KTARA") ?: "", 120)
-                TableCell(text = contentValues.getAsString("GTIN") ?: "", 120)
-                TableCell(text = contentValues.getAsString("id") ?: "", 120)
-            }
+        items(dataList.size) { index ->
+            val contentValues = dataList[index]
+            DataTableRow(index + 1, contentValues)
         }
+    }
+}
+
+@Composable
+fun TableHeaderRow() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.LightGray)
+            .padding(5.dp)
+    ) {
+        TableHeader(text = "№", 40)
+        TableHeader(text = "PR", 20)
+        TableHeader(text = "KRK", 50)
+        TableHeader(text = "KT", 50)
+        TableHeader(text = "EMK", 50)
+        TableHeader(text = "EMKPOD", 50)
+        TableHeader(text = "KMC", 120)
+        TableHeader(text = "KTARA", 120)
+        TableHeader(text = "GTIN", 120)
+        TableHeader(text = "id", 120)
+    }
+}
+
+@Composable
+fun DataTableRow(index: Int, contentValues: ContentValues) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 5.dp)
+            .background(if (index % 2 == 0) Color.White else Color.LightGray)
+    ) {
+        TableCell(text = (index+1).toString(), 40)
+        TableCell(text = contentValues.getAsString("PR") ?: "", 20)
+        TableCell(text = contentValues.getAsString("KRK") ?: "", 50)
+        TableCell(text = contentValues.getAsString("KT") ?: "", 50)
+        TableCell(text = contentValues.getAsString("EMK") ?: "", 50)
+        TableCell(text = contentValues.getAsString("EMKPOD") ?: "", 50)
+        TableCell(text = contentValues.getAsString("KMC") ?: "", 120)
+        TableCell(text = contentValues.getAsString("KTARA") ?: "", 120)
+        TableCell(text = contentValues.getAsString("GTIN") ?: "", 120)
+        TableCell(text = contentValues.getAsString("id") ?: "", 120)
     }
 }
 
@@ -219,34 +165,5 @@ fun TableCell(text: String, weightRow: Int) {
     }
 }
 
-@Composable
-fun buttonPlace(viewModel: MainViewModel, navController: NavHostController) {
-    val context = LocalContext.current
-
-    Row(
-        modifier = Modifier
-            .height(50.dp)
-            .fillMaxWidth()
-            .padding(start = 10.dp, top = 5.dp),
-        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        MyButton(text = "Main Screen") {
-            navController.navigate("main_screen")
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        MyButton(text = "Create Table") {
-            viewModel.createTable(context, "request.json")
-        }
-        MyButton(text = "SQLite") {
-            val tableName = "NS_SEMK"
-            val selectedColumn = null
-            val selectedValue = null
-            val listColumnsForReturn = emptyList<String>()
-            viewModel.getDataFromBd(tableName, selectedColumn, selectedValue, listColumnsForReturn)
-        }
-    }
-
-}
 
 

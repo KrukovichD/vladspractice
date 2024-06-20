@@ -11,6 +11,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.vladspractice.Data.DB.SQL.SqlRepositoryImp
 import com.example.vladspractice.Domain.repository.DatabaseRepository
 import com.example.vladspractice.Domain.repository.ParserRepository
 import com.example.vladspractice.Domain.usecase.CreateTableUseCase
@@ -36,9 +37,11 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
     private val getDataFile = GetDataFromFileUseCase(fileRepository)
     private val getRequest = GetRequestUseCase(fileRepository)
 
+    private val _selectedColumns = mutableMapOf<String, String?>()
+    val selectedColumns: Map<String, String?>
+        get() = _selectedColumns.toMap()
+
     var selectedTable by mutableStateOf("")
-    var selectedWhereColumn by mutableStateOf<String?>(null)
-    var selectedWhereValue by mutableStateOf<String?>(null)
 
     private val _orientation = MutableLiveData("Vertical")
     val orientation: LiveData<String> = _orientation
@@ -51,8 +54,8 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
 
     var CREATE_TABLE: String? = null
 
-    private val _selectedColumns = mutableStateListOf<String>()
-    val selectedColumns: List<String> = _selectedColumns
+    private val _selectedColumnsReturn = mutableStateListOf<String>()
+    val selectedColumnsReturn: List<String> = _selectedColumnsReturn
 
     private val _tableNames = MutableLiveData<List<String>>()
     val tableNames: LiveData<List<String>>  get() = _tableNames
@@ -65,8 +68,8 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
         _orientation.value = if (_orientation.value == "Vertical") "Horizontal" else "Vertical"
     }
 
-    fun getInfo(){
-        Log.d("Get info", "$selectedWhereColumn  and $selectedWhereValue")
+    fun getInfo(context: Context){
+        Log.d("MainViewModel", "_selectedColumns: $_selectedColumns")
     }
     fun writeToBd(context: Context, fileName: String) {
 
@@ -76,33 +79,38 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
 
     }
     fun getListTableField(){
-        if (selectedTable != ""){
-            _tableField.value = getListTableFieldsUseCase.invoke("$selectedTable")
-            _tableField.observeForever { item ->
-                Log.d("List Table" , "$item")
+        viewModelScope.launch {
+            if (selectedTable != ""){
+                _tableField.value = getListTableFieldsUseCase.invoke("$selectedTable")
+                _tableField.observeForever { item ->
+                    Log.d("List Table" , "$item")
+                }
             }
         }
+
 
     }
     fun getListOfTableBd(){
         var LIST_TABLE = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT IN ('sqlite_sequence', 'android_metadata')"
 
-        _tableNames.value= getListTable.invoke(LIST_TABLE)
+        viewModelScope.launch {
+            _tableNames.value= getListTable.invoke(LIST_TABLE)
 
-        _tableNames.observeForever { item ->
-            Log.d("List Table" , "$item")
+            _tableNames.observeForever { item ->
+                Log.d("List Table" , "$item")
+            }
         }
+
+
     }
 
     fun getDataFromBd(
         tableName: String,
-        selectedColumn: String?,
-        selectedValue: String?,
-        listColumnsForReturn: List<String>) {
-
-
+        selectedColumns: Map<String, String?>,
+        listColumnsForReturn: List<String>
+    ) {
         viewModelScope.launch {
-            val data = getDataseCase.invoke(tableName, selectedColumn, selectedValue, listColumnsForReturn)
+            val data = getDataseCase.invoke(tableName,selectedColumns, listColumnsForReturn)
             data.observeForever { dataList ->
                 _dataList.postValue(dataList)
                 Log.d("MainViewModel", "Data list updated: $dataList")
@@ -115,9 +123,6 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
                 }
             }
         }
-
-
-
     }
 
     fun deleteDataFromBd(tableName: String, selectedColumn: String?, selectedValue: String?){
@@ -127,8 +132,6 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
     }
 
     fun createTable(context: Context, fileName: String){
-/*        var deleteTable = "DROP TABLE Test_Table"
-        createTable.createTable(deleteTable)*/
         createTable.createTable(getJsonRequest(context, fileName))
     }
 
@@ -140,15 +143,24 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
         return _request.value.toString()
     }
 
-//Обработка чекбоксов
-    fun addColumn(column: String) {
-        if (!_selectedColumns.contains(column)) {
-            _selectedColumns.add(column)
+    fun addColumnValue(column: String, value: String) {
+        _selectedColumns[column] = null
+        _selectedColumns[column] = value
+    }
+
+    fun removeColumnValue(column: String) {
+        _selectedColumns[column] = null
+        _selectedColumns.remove(column)
+    }
+
+    fun addColumnReturn(column: String) {
+        if (!_selectedColumnsReturn.contains(column)) {
+            _selectedColumnsReturn.add(column)
         }
     }
 
-    fun removeColumn(column: String?) {
-        column?.let { _selectedColumns.remove(it) } ?: _selectedColumns.clear()
+    fun removeColumnReturn(column: String?) {
+        column?.let { _selectedColumnsReturn.remove(it) } ?: _selectedColumnsReturn.clear()
 
     }
 
@@ -157,7 +169,7 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
 
 
         if(selectedTable != ""){
-                getDataFromBd(selectedTable, selectedWhereColumn, selectedWhereValue,_selectedColumns)
+                getDataFromBd(selectedTable, _selectedColumns,_selectedColumnsReturn)
         }
     }
 }

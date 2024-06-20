@@ -78,19 +78,6 @@ fun MainContent(
                 viewModel.writeToBd(context = context, fileName = "NS_SEMK_.xml")
                 Log.d("Read XML", "Success")
             }
-
-/*            MyButton(text = "SQLite") {
-
-                val tableName = "NS_SEMK"
-                val selectedColumn = null
-                val selectedValue = null
-                val listColumnsForReturn = emptyList<String>()
-                //val listColumnsForReturn = listOf("KMC", "KRK", "KT")
-                viewModel.getDataFromBd(tableName, selectedColumn, selectedValue, listColumnsForReturn)
-
-
-            }*/
-
             MyButton(text = "Clear BD") {
                 viewModel.deleteDataFromBd("NS_SEMK", null,null)
             }

@@ -47,8 +47,7 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
 
     override fun getData(
         tableName: String,
-        selectedColumn: String?,
-        selectedValue: String?,
+        selectedColumns: Map<String, String?>,
         listColumnsForReturn: List<String>
     ): LiveData<List<ContentValues>> {
         val liveData = MutableLiveData<List<ContentValues>>()
@@ -59,8 +58,29 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
             var cursor: Cursor? = null
             try {
                 val columns = if (listColumnsForReturn.isEmpty()) null else listColumnsForReturn.toTypedArray()
-                val selection = selectedColumn?.let { "$selectedColumn=?" }
-                val selectionArgs = selectedValue?.let { arrayOf(it) }
+                val selection: String?
+                val selectionArgs: Array<String>?
+
+                if (selectedColumns.isNotEmpty()) {
+                    val selectionBuilder = StringBuilder()
+                    val selectionArgsList = mutableListOf<String>()
+
+                    for ((key, value) in selectedColumns) {
+                        if (selectionBuilder.isNotEmpty()) {
+                            selectionBuilder.append(" AND ")
+                        }
+                        selectionBuilder.append("$key=?")
+                        value?.let {
+                            selectionArgsList.add(it)
+                        }
+                    }
+
+                    selection = selectionBuilder.toString()
+                    selectionArgs = selectionArgsList.toTypedArray()
+                } else {
+                    selection = null
+                    selectionArgs = null
+                }
 
                 cursor = dbHelper.readableDatabase.query(
                     tableName,
@@ -100,6 +120,7 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
     }
 
 
+
     override suspend fun delete(tableName: String, selectedColumn: String?, selectedValue: String?) {
         openDB()
         try {
@@ -128,11 +149,11 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
     }
 
 
-    override fun getListTableFields(tableName: String): List<String> {
-        val db = dbHelper.readableDatabase
+    override suspend fun getListTableFields(tableName: String): List<String> {
+        openDB()
         val fieldNames = mutableListOf<String>()
 
-        db.rawQuery("PRAGMA table_info($tableName)", null).use { cursor ->
+        db!!.rawQuery("PRAGMA table_info($tableName)", null).use { cursor ->
             val nameIndex = cursor.getColumnIndex("name")
 
             while (cursor.moveToNext()) {
@@ -144,14 +165,13 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
                 }
             }
         }
-
-        db.close()
+        closeDb()
         return fieldNames
     }
 
-    override fun getListTable(LIST_TABLE: String): List<String> {
-        val db = dbHelper.readableDatabase
-        val cursor = db.rawQuery(LIST_TABLE, null)
+    override suspend fun getListTable(LIST_TABLE: String): List<String> {
+        openDB()
+        val cursor = db!!.rawQuery(LIST_TABLE, null)
         val tableNames = mutableListOf<String>()
 
         if (cursor.moveToFirst()) {
@@ -162,7 +182,7 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
         }
 
         cursor.close()
-        db.close()
+        closeDb()
         return tableNames
     }
 
