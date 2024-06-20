@@ -37,8 +37,8 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
     private val getRequest = GetRequestUseCase(fileRepository)
 
     var selectedTable by mutableStateOf("")
-    var selectedWhereColumn by mutableStateOf("")
-    var selectedWhereValue by mutableStateOf("")
+    var selectedWhereColumn by mutableStateOf<String?>(null)
+    var selectedWhereValue by mutableStateOf<String?>(null)
 
     private val _orientation = MutableLiveData("Vertical")
     val orientation: LiveData<String> = _orientation
@@ -154,8 +154,11 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
 
     // кнопка в таблице
     fun fetchDataFromDb() {
-        if(selectedTable != "")
-        getDataFromBd(selectedTable, selectedWhereColumn, selectedWhereValue,_selectedColumns)
+
+
+        if(selectedTable != ""){
+                getDataFromBd(selectedTable, selectedWhereColumn, selectedWhereValue,_selectedColumns)
+        }
     }
 }
 

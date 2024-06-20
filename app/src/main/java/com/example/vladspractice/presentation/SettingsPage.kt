@@ -49,9 +49,9 @@ import javax.sql.RowSetEvent
 fun SettingPage(viewModel: MainViewModel, navController: NavController) {
     Column {
         DropDown(viewModel)
-//        MyButton(text = "getInfo") {
-//            viewModel.getInfo()
-//        }
+        MyButton(text = "getInfo") {
+            viewModel.getInfo()
+        }
         MyButton(text ="Получить данные из БД" ) {
             viewModel.fetchDataFromDb()
             navController.navigate("table_screen")
@@ -92,7 +92,7 @@ fun SettingPage(viewModel: MainViewModel, navController: NavController) {
                 value = text,
                 onValueChange = { newText ->
                     text = newText
-                    viewModel.selectedWhereValue = newText.trim()
+                    viewModel.selectedWhereValue = newText
                 },
                 placeholder = {
                     Text("Enter value")
