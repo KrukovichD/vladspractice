@@ -70,7 +70,7 @@ fun SettingPage(viewModel: MainViewModel, navController: NavController) {
                 value = text,
                 onValueChange = { newText ->
                     text = newText
-                    viewModel.selectedWhereColumn = newText.trim()
+                    viewModel.selectedWhereColumn = if (newText.isEmpty()) null else newText
                 },
                 placeholder = {
                     Text("Enter Column")
@@ -92,7 +92,7 @@ fun SettingPage(viewModel: MainViewModel, navController: NavController) {
                 value = text,
                 onValueChange = { newText ->
                     text = newText
-                    viewModel.selectedWhereValue = newText
+                    viewModel.selectedWhereValue = if (newText.isEmpty()) null else newText
                 },
                 placeholder = {
                     Text("Enter value")
