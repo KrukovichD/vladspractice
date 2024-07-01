@@ -52,6 +52,8 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
     }
 
 
+
+
     override fun getData(
         tableName: String,
         selectedColumns: Map<String, String?>,
@@ -59,6 +61,7 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
         viewModel: MainViewModel
     ): LiveData<List<ContentValues>> {
         val liveData = MutableLiveData<List<ContentValues>>()
+        var start = System.nanoTime()
         openDB()
         viewModel.setLoading(true)
 
@@ -66,40 +69,36 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
             val dataList = mutableListOf<ContentValues>()
             var cursor: Cursor? = null
             try {
-                val columns = if (listColumnsForReturn.isEmpty()) null else listColumnsForReturn.toTypedArray()
-                val selection: String?
-                val selectionArgs: Array<String>?
+                val columns = if (listColumnsForReturn.isEmpty()) "*" else listColumnsForReturn.joinToString(", ")
+                val query: String
+                val args: Array<String>
 
                 if (selectedColumns.isNotEmpty()) {
                     val selectionBuilder = StringBuilder()
                     val selectionArgsList = mutableListOf<String>()
 
-                    for ((key, value) in selectedColumns) {
+                    selectedColumns.forEach { (key, value) ->
                         if (selectionBuilder.isNotEmpty()) {
                             selectionBuilder.append(" AND ")
                         }
-                        selectionBuilder.append("$key=?")
+                        selectionBuilder.append("LOWER($key) LIKE ?")
                         value?.let {
-                            selectionArgsList.add(it)
+                            selectionArgsList.add("%${it.lowercase()}%")
                         }
                     }
 
-                    selection = selectionBuilder.toString()
-                    selectionArgs = selectionArgsList.toTypedArray()
+                    val selection = if (selectionBuilder.isEmpty()) null else selectionBuilder.toString()
+                    val selectionArgs = if (selectionArgsList.isEmpty()) null else selectionArgsList.toTypedArray()
+
+                    query = "SELECT $columns FROM $tableName" +
+                            (if (selection != null) " WHERE $selection" else "")
+                    args = selectionArgs ?: emptyArray()
                 } else {
-                    selection = null
-                    selectionArgs = null
+                    query = "SELECT $columns FROM $tableName"
+                    args = emptyArray()
                 }
 
-                cursor = dbHelper.readableDatabase.query(
-                    tableName,
-                    columns,
-                    selection,
-                    selectionArgs,
-                    null,
-                    null,
-                    null
-                )
+                cursor = dbHelper.readableDatabase.rawQuery(query, args)
 
                 while (cursor.moveToNext()) {
                     val values = ContentValues()
@@ -122,13 +121,17 @@ class SqlRepositoryImp(val context: Context): SqlRepository {
             }
 
             withContext(Dispatchers.Main) {
-                delay(500)
                 liveData.value = dataList
                 viewModel.setLoading(false)
             }
         }
+        var end = System.nanoTime()
+        Log.d("time", "${end-start}")
         return liveData
     }
+
+
+
 
 
 

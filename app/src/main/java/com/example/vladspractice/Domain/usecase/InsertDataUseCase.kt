@@ -12,6 +12,4 @@ class InsertDataUseCase(private val dataRepository: DatabaseRepository) {
     suspend fun invoke(contentValuesList: List<ContentValues>, TABLE_NAME: String, viewModel: MainViewModel) {
         dataRepository.insertDataToDb(contentValuesList, TABLE_NAME, viewModel)
     }
-
-
 }

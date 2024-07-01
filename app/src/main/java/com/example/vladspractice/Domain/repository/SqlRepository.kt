@@ -8,8 +8,6 @@ import com.example.vladspractice.presentation.MainViewModel
 interface SqlRepository {
     suspend fun insertData(dataList: List<ContentValues>, TABLE_NAME: String, viewModel: MainViewModel)
 
-
-
     fun getData(
         tableName: String,
         selectedColumns: Map<String, String?>,
@@ -20,6 +18,8 @@ interface SqlRepository {
     suspend fun delete(tableName: String, selectedColumn: String?, selectedValue: String?)
 
     fun createTable(CREATE_TABLE: String)
+
     suspend fun  getListTable():List<String>
+
     suspend fun getListTableFields(tableName: String): List<String>
 }

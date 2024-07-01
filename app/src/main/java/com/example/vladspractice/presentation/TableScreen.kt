@@ -75,11 +75,10 @@ fun TableScreen(viewModel: MainViewModel, navController: NavHostController) {
     } else {
         if (dataList.isNotEmpty()) {
             DataTable(dataList, viewModel)
+        }else{
+            Text(text = "Таблица не выбрана или пуста")
         }
     }
-
-
-
 }
 
 @Composable
@@ -167,8 +166,6 @@ fun DataTableRow(index: Int, contentValues: ContentValues, selectedColumnsReturn
             }
         }
     }
-
-
 }
 
 @Composable

@@ -2,6 +2,7 @@ package com.example.vladspractice.presentation
 
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -90,14 +91,14 @@ fun CustomCircle(
         ) {
             val width = size.width
             val height = size.height
-            val circleThickness = width / 25f
+            val circleThickness = width / 35f
             circleCenter = Offset(x = width / 2f, y = height / 2)
 
             drawCircle(
                 brush = Brush.radialGradient(
                     listOf(
-                        primaryColor.copy(0.45f),
-                        secondaryColor.copy(0.15f)
+                        primaryColor.copy(0.75f),
+                        secondaryColor.copy(0.25f)
                     )
                 ),
                 radius = circleRadius,
@@ -147,7 +148,7 @@ fun CustomCircle(
 
                 val end = Offset(
                     x = (outerRadius * cos(angleInRad) + circleCenter.x + xGapAdjustment).toFloat(),
-                    y = (outerRadius * sin(angleInRad) + circleThickness + circleCenter.y + yGapAdjustment).toFloat()
+                    y = (outerRadius * sin(angleInRad) + circleThickness + circleCenter.y + yGapAdjustment + 5).toFloat()
                 )
 
                 rotate(
@@ -158,13 +159,13 @@ fun CustomCircle(
                         color = color,
                         start = start,
                         end = end,
-                        strokeWidth = 1.dp.toPx()
+                        strokeWidth = 1.5.dp.toPx()
                     )
                 }
             }
             drawContext.canvas.nativeCanvas.apply {
                 drawText(
-                    "$positionValue %",
+                    "$positionValue%",
                     circleCenter.x,
                     circleCenter.y + 45.dp.toPx() / 3f,
                     Paint().apply {
@@ -185,17 +186,22 @@ fun CustomCircle(
 @Preview
 @Composable
 fun Preview(){
-    CustomCircle(
-        modifier = Modifier
-            .size(250.dp),
-        initialValue = 100,
-        primaryColor = Color(20,233,255),
-        secondaryColor = Color.Gray,
-        circleRadius = 230f,
-        onPositionChange = {
+    Box(
+        modifier = Modifier.background(Color.White)
+    ){
+        CustomCircle(
+            modifier = Modifier
+                .size(250.dp),
+            initialValue = 50,
+            primaryColor = Color(15,112,255),
+            secondaryColor = Color.Gray,
+            circleRadius = 230f,
+            onPositionChange = {
 
-        }
-    )
+            }
+        )
+
+    }
 }
 
 

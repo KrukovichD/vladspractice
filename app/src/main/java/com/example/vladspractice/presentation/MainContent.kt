@@ -90,7 +90,7 @@ fun MainContent(
                     modifier = Modifier
                         .size(250.dp),
                     initialValue = valueLoading,
-                    primaryColor = Color(20,233,255),
+                    primaryColor = Color(15,112,255),
                     secondaryColor = Color.Gray,
                     circleRadius = 230f,
                     onPositionChange = {
@@ -114,7 +114,7 @@ fun MainContent(
                 }
 
                 MyButton(text = "Read XML") {
-                    viewModel.writeToBd(context = context, fileName = "NS_SEMK.xml", viewModel)
+                    viewModel.writeToBd(context = context, fileName = "NS_MC.xml", viewModel)
                     Log.d("Read XML", "Success")
                 }
 

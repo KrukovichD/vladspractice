@@ -136,8 +136,6 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
                 Log.d("List Table" , "$item")
             }
         }
-
-
     }
 
     fun getDataFromBd(
@@ -147,13 +145,14 @@ class MainViewModel(private val dataRepository: DatabaseRepository,  private val
         viewModel: MainViewModel
     ) {
         if(listColumnsForReturn.isNotEmpty()){
-            viewModelScope.launch {
 
+            viewModelScope.launch {
                 val data = getDataseCase.invoke(tableName,selectedColumns, listColumnsForReturn, viewModel)
                 data.observeForever { dataList ->
                     _dataList.postValue(dataList)
                     Log.d("MainViewModel", "Data list updated: $dataList")
                 }
+
 /*                data.observeForever { dataList ->
                     dataList?.let { list ->
                         for (contentValues in list) {
